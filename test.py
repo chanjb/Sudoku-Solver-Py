@@ -6,13 +6,15 @@ from datetime import datetime
 from multiprocessing import Process, Queue
 
 def solveProcess(solveQueue):
-    sudokuGrid = solveQueue.get()
-   
-    if(solveSudoku(sudokuGrid)):
-        solveQueue.put(True)
-        solveQueue.put(sudokuGrid)
-    else:
-        solveQueue.put(False)
+    sSolver = solveQueue.get()
+
+    startTime = datetime.now()
+    result = sSolver.solveSudoku()
+    endTime = datetime.now()
+
+    solveQueue.put((result, startTime, endTime))
+    if(result):
+        solveQueue.put(sSolver.sudokuGrid)
 
 if __name__ == '__main__':
     with open('testcases.json', 'r') as read_file:
@@ -22,11 +24,12 @@ if __name__ == '__main__':
         print('Test Case:', testCase)
         print('Description:', dataFile[testCase]['description'])
         sudokuGrid = copy.deepcopy(dataFile[testCase]['sudoku'])
+        sSolver = SudokuSolver(sudokuGrid)
         solution = dataFile[testCase]['solution']
 
-        ##simplifyGrid() test section
+        # simplifyGrid() test section
         startTime = datetime.now()
-        result = simplifyGrid(sudokuGrid)
+        result = sSolver.simplifyGrid()
         endTime = datetime.now()
         totalStartTime = endTime - startTime
         
@@ -45,10 +48,10 @@ if __name__ == '__main__':
 
         print('Time to simplify/validate:', totalStartTime)
 
-        ##simplify -> solve test section
+        # simplify -> solve test section
         if (result != False) and (sudokuGrid != solution):
             startTime = datetime.now()
-            result = solveSudoku(sudokuGrid)
+            result = sSolver.solveSudoku()
             endTime = datetime.now()
             totalStartTime += endTime - startTime
             totalStartTime = str(totalStartTime)
@@ -70,22 +73,23 @@ if __name__ == '__main__':
             print('Total time to simplify/validate/solve:', totalStartTime)
 
 
-        ##solveSudoku() only test section
+        # solveSudoku() only test section
         sudokuGrid = copy.deepcopy(dataFile[testCase]['sudoku'])
+        sSolver = SudokuSolver(sudokuGrid)
 
         solveQueue = Queue()
-        solveQueue.put(sudokuGrid)
+        solveQueue.put(sSolver)
         solveTask = Process(target=solveProcess, args=(solveQueue,))
 
         timeout = 20
-        startTime = datetime.now()
+        startTimeout = datetime.now()
         solveTask.start()
-        endTime = datetime.now()
-        while (endTime - startTime).seconds < timeout:
+        endTimeout = datetime.now()
+        while (endTimeout - startTimeout).seconds < timeout:
             time.sleep(.01)
-            endTime = datetime.now()
+            endTimeout = datetime.now()
             if not solveTask.is_alive():
-                result = solveQueue.get()
+                result, startTime, endTime = solveQueue.get()
                 if result:
                     sudokuGrid = solveQueue.get()
                 if result == dataFile[testCase]['result']:
@@ -106,7 +110,7 @@ if __name__ == '__main__':
             solveTask.join()
             print('Solve: Failed (Timeout - 20 secs)')
             result = False
+            startTime = startTimeout
+            endTime = endTimeout
         
         print('Time to solve:', endTime - startTime, '\n')
-
-

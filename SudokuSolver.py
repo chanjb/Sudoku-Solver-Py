@@ -1,406 +1,267 @@
-## Returns a list of all possible valid numbers for a grid position
-def findPossibilities(sudokuGrid, x, y):
-    pList = []
-    for i in range(1,10):
-        if (inRow(sudokuGrid, x, i) and inColumn(sudokuGrid, y, i) and inBox(sudokuGrid, x, y, i)):
-            pList.append(i)
-    return pList
+class SudokuSolver:
 
-## Returns a dictionary with grid position as the key and list of possibilites as the value
-def constructNextTilePossibilities(sudokuGrid):
-    tPossibilities = dict()
-    for x, rows in enumerate(sudokuGrid):
-        for y, num in enumerate(rows):
-            if num == 0:
-                tPossibilities[(x,y)] = findPossibilities(sudokuGrid, x, y)
-                return tPossibilities
-    return {}
+    def __init__(self, tSudokuGrid):
+        self.sudokuGrid = tSudokuGrid
+        self.fullPossibilities = dict()
+        self.rescanQueue = []
+        self.fullCountScanXYZ = [0,0,0]
+        self.numCounts = [0] * 10
+        self.tileList = dict()
 
-## Backtracking algorithm to solve Sudoku
-def solveSudoku(sudokuGrid):
-    tile = constructNextTilePossibilities(sudokuGrid)
-    for xy in tile:
-        x = xy[0]
-        y = xy[1]
-        for i in tile[xy]:
-            sudokuGrid[x][y] = i
-            if (solveSudoku(sudokuGrid)):
-                return True
-        sudokuGrid[x][y] = 0
-        return False
-    return True
+    # Returns a list of all possible valid numbers for a grid position
+    def findPossibilities(self, tSudokuGrid, gridX, gridY):
+        pList = []
+        for i in range(1,10):
+            if (self.inRow(tSudokuGrid, gridX, i) and self.inColumn(tSudokuGrid, gridY, i) and self.inBox(tSudokuGrid, gridX, gridY, i)):
+                pList.append(i)
+        return pList
 
-## Runs before backtracking algorithm to reduce the number of permutations
-## Finds simple solutions where only 1 possibility exists for a grid position
-## And where a specific number has only 1 possiible location is a row/column/box
-## Also performs 3 validation checks while scanning for solutions which antiquated the validateGrid() function
-## By checking if there are zero possibilities for a grid position,
-## if a distinct number has no possible locations in the row/column/box,
-## and if a distinct number had a duplicate entry in the row/column/box for the initial grid
-def simplifyGrid(sudokuGrid):
-    rescanQueue = []
-    fullCountScanXYZ = [0,0,0]
-    tPossibilities = dict()
-    for x, rows in enumerate(sudokuGrid):
-        for y, num in enumerate(rows):
-            if num == 0:
-                pList = findPossibilities(sudokuGrid, x, y)
-                if len(pList) == 0:
-                    return False
-                    
-                if len(pList) == 1:
-                    sudokuGrid[x][y] = pList[0]
-                    tPossibilities[(x,y)] = pList[0]
-                    rescanQueue.append([(x,y), pList[0]])
-                else:
-                    tPossibilities[(x,y)] = pList
-            else:
-                tPossibilities[(x,y)] = sudokuGrid[x][y]
+    # Returns a dictionary with grid position as the key and list of possibilites as the value
+    def constructNextTilePossibilities(self, tSudokuGrid):
+        tPossibilities = dict()
+        for x, rows in enumerate(tSudokuGrid):
+            for y, num in enumerate(rows):
+                if num == 0:
+                    tPossibilities[(x, y)] = self.findPossibilities(tSudokuGrid, x, y)
+                    return tPossibilities
+        return {}
 
-    while rescanQueue or fullCountScanXYZ != [1,1,1]:
-        if rescanQueue:
-            xy = rescanQueue[0][0]
-            x = xy[0]
-            y = xy[1]
-            snum = rescanQueue[0][1]
+    # Backtracking algorithm to solve Sudoku
+    def solveSudoku(self, tSudokuGrid = None):
+        if tSudokuGrid is None:
+            tSudokuGrid = self.sudokuGrid
+        tile = self.constructNextTilePossibilities(tSudokuGrid)
+        for xy in tile:
+            gridX = xy[0]
+            gridY = xy[1]
+            for i in tile[xy]:
+                tSudokuGrid[gridX][gridY] = i
+                if (self.solveSudoku(tSudokuGrid)):
+                    return True
+            tSudokuGrid[gridX][gridY] = 0
+            return False
+        return True
 
-            # Scan row
-            numCounts = [0] * 10
-            tileList = dict()
-            
-            for row in range(9):
-                if type(tPossibilities[(row,y)]) == list:    
-                    pList = tPossibilities[(row,y)]
-                    try:
-                        pList.remove(snum)
-                    except:
-                        pass
-                    
+    # Runs before backtracking algorithm to reduce the number of permutations
+    # Finds simple solutions where only 1 possibility exists for a grid position
+    # And where a specific number has only 1 possiible location is a row/column/box
+    # Also performs 3 validation checks while scanning for solutions which antiquated the validateGrid() function
+    # By checking if there are zero possibilities for a grid position,
+    # if a distinct number has no possible locations in the row/column/box,
+    # and if a distinct number had a duplicate entry in the row/column/box for the initial grid
+    def simplifyGrid(self):
+        for x, rows in enumerate(self.sudokuGrid):
+            for y, num in enumerate(rows):
+                if num == 0:
+                    pList = self.findPossibilities(self.sudokuGrid, x, y)
                     if len(pList) == 0:
-                        return False
-
-                    if len(pList) == 1:
-                        sudokuGrid[row][y] = pList[0]
-                        tPossibilities[(row,y)] = pList[0]
-                        rescanQueue.append([(row,y), pList[0]])
+                        return False   
+                    elif len(pList) == 1:
+                        self.sudokuGrid[x][y] = pList[0]
+                        self.fullPossibilities[(x, y)] = pList[0]
+                        self.rescanQueue.append([(x, y), pList[0]])
                     else:
-                        tPossibilities[(row,y)] = pList
-
-                    for pNum in pList:
-                        numCounts[pNum] += 1
-                        tileList[pNum] = (row, y)
+                        self.fullPossibilities[(x, y)] = pList
                 else:
-                    numCounts[tPossibilities[(row,y)]] += 10
+                    self.fullPossibilities[(x, y)] = self.sudokuGrid[x][y]
 
-            if not (checkCountList(tileList, numCounts)):
-                return False
-                ''' 
-            for index, count in enumerate(numCounts):
-                if count == 0 and index != 0:
-                    return False
-                
-                if count == 1:
-                    tileX = tileList[index][0]
-                    tileY = tileList[index][1]
-                    sudokuGrid[tileX][tileY] = index
-                    tPossibilities[(tileX, tileY)] = index
-                    rescanQueue.append([(tileX, tileY), index])
+        while self.rescanQueue or self.fullCountScanXYZ != [1,1,1]:
+            if self.rescanQueue:
+                xy = self.rescanQueue[0][0]
+                gridX = xy[0]
+                gridY = xy[1]
+                sNum = self.rescanQueue[0][1]
 
-                if count > 19:
-                    return False
-                    '''
-
-            # Scan column
-            numCounts = [0] * 10
-            tileList = dict()
-            
-            for column in range(9):
-                if type(tPossibilities[(x,column)]) == list:    
-                    pList = tPossibilities[(x,column)]
-                    try:
-                        pList.remove(snum)
-                    except:
-                        pass
-                    
-                    if len(pList) == 0:
-                        return False
-
-                    if len(pList) == 1:
-                        sudokuGrid[x][column] = pList[0]
-                        tPossibilities[(x,column)] = pList[0]
-                        rescanQueue.append([(x,column), pList[0]])
-                    else:
-                        tPossibilities[(x,column)] = pList
-
-                    for pNum in pList:
-                        numCounts[pNum] += 1
-                        tileList[pNum] = (x, column)
-                else:
-                    numCounts[tPossibilities[(x,column)]] += 10
-
-            if not (checkCountList(tileList, numCounts)):
-                return False
-                ''' 
-            for index, count in enumerate(numCounts):
-                if count == 0 and index != 0:
-                    return False
-                
-                if count == 1:
-                    tileX = tileList[index][0]
-                    tileY = tileList[index][1]
-                    sudokuGrid[tileX][tileY] = index
-                    tPossibilities[(tileX, tileY)] = index
-                    rescanQueue.append([(tileX, tileY), index])
-
-                if count > 19:
-                    return False
-                    '''
-
-            # Scan box
-            numCounts = [0] * 10
-            tileList = dict()
-            boxX = (x // 3) * 3
-            boxY = (y // 3) * 3
-            for i in range(3):
-                for j in range(3):
-                    if type(tPossibilities[(boxX+i, boxY+j)]) == list:
-                        pList = tPossibilities[(boxX+i, boxY+j)]
-                        try:
-                            pList.remove(snum)
-                        except:
-                            pass
-
-                        if len(pList) == 0:
-                            return False
-
-                        if len(pList) == 1:
-                            sudokuGrid[boxX+i][boxY+j] = pList[0]
-                            tPossibilities[(boxX+i, boxY+j)] = pList[0]
-                            rescanQueue.append([(boxX+i, boxY+j), pList[0]])
-                        else:
-                            tPossibilities[(boxX+i, boxY+j)] = pList
-
-                        for pNum in pList:
-                            numCounts[pNum] += 1
-                            tileList[pNum] = (boxX+i, boxY+j)
-                    else:
-                        numCounts[tPossibilities[(boxX+i, boxY+j)]] += 10
-
-            if not (checkCountList(tileList, numCounts)):
-                return False
-                ''' 
-            for index, count in enumerate(numCounts):
-                if count == 0 and index != 0:
-                    return False
-                    
-                if count == 1:
-                    tileX = tileList[index][0]
-                    tileY = tileList[index][1]
-                    sudokuGrid[tileX][tileY] = index
-                    tPossibilities[(tileX, tileY)] = index
-                    rescanQueue.append([(tileX, tileY), index])
-
-                if count > 19:
-                    return False
-                    '''
-            
-            rescanQueue.pop(0)
-
-        if not rescanQueue:
-            for row in range(9):
-                numCounts = [0] * 10
-                tileList = dict()
-                
-                for column in range(9):
-                    if type(tPossibilities[(row, column)]) == list:
-                        for pNum in tPossibilities[(row, column)]:
-                            numCounts[pNum] += 1
-                            tileList[pNum] = (row, column)
-                    else:
-                        numCounts[tPossibilities[(row, column)]] += 10
-
-                if not (checkCountList(tileList, numCounts)):
-                    return False
-                    ''' 
-                for index, count in enumerate(numCounts):
-                    if count == 0 and index != 0:
-                        return False
-                    
-                    if count == 1:
-                        tileX = tileList[index][0]
-                        tileY = tileList[index][1]
-                        sudokuGrid[tileX][tileY] = index
-                        tPossibilities[(tileX, tileY)] = index
-                        rescanQueue.append([(tileX, tileY), index])
-                        if fullCountScanXYZ[0] == 1:
-                            break
-
-                    if count > 19:
-                        return False
-                        '''
-            fullCountScanXYZ[0] = 1
-            
-                            
-        if not rescanQueue:
-            for column in range(9):
-                numCounts = [0] * 10
-                tileList = dict()
+                # Scan row
+                self.numCounts = [0] * 10
+                self.tileList = dict()
                 
                 for row in range(9):
-                    if type(tPossibilities[(row, column)]) == list:
-                        for pNum in tPossibilities[(row, column)]:
-                            numCounts[pNum] += 1
-                            tileList[pNum] = (row, column)
-                    else:
-                        numCounts[tPossibilities[(row, column)]] += 10
-
-                if not (checkCountList(tileList, numCounts)):
+                    if not self.updateChecks(row, gridY, sNum):
+                        return False
+                if not self.checkCountList(self.fullCountScanXYZ[0]):
                     return False
-                    ''' 
-                for index, count in enumerate(numCounts):
-                    if count == 0 and index != 0:
-                        return False
-                        
-                    if count == 1:
-                        tileX = tileList[index][0]
-                        tileY = tileList[index][1]
-                        sudokuGrid[tileX][tileY] = index
-                        tPossibilities[(tileX, tileY)] = index
-                        rescanQueue.append([(tileX, tileY), index])
-                        if fullCountScanXYZ[1] == 1:
-                            break
 
-                    if count > 19:
-                        return False
-                        '''
-            fullCountScanXYZ[1] = 1
-
-        if not rescanQueue:
-            for x in range(3):
-                for y in range(3):
-                    numCounts = [0] * 10
-                    tileList = dict()
-                    
-                    for i in range(3):
-                        for j in range(3):
-                            boxX = (x * 3) + i
-                            boxY = (y * 3) + j
-                            if type(tPossibilities[(boxX, boxY)]) == list:
-                                for pNum in tPossibilities[(boxX, boxY)]:
-                                    numCounts[pNum] += 1
-                                    tileList[pNum] = (boxX, boxY)
-                            else:
-                                numCounts[tPossibilities[(boxX, boxY)]] += 10
-
-                    if not (checkCountList(tileList, numCounts)):
-                        return False
-                        '''     
-                    for index, count in enumerate(numCounts):
-                        if count == 0 and index != 0:
-                            return False
-                        
-                        if count == 1:
-                            tileX = tileList[index][0]
-                            tileY = tileList[index][1]
-                            sudokuGrid[tileX][tileY] = index
-                            tPossibilities[(tileX, tileY)] = index
-                            rescanQueue.append([(tileX, tileY), index])
-                            if fullCountScanXYZ[2] == 1:
-                                break
-
-                        if count > 19:
-                            return False
-                        '''
-            fullCountScanXYZ[2] = 1
-
-##    if not (validateGrid(tPossibilities)):
-##        return False 
-    return True
-
-## Checks count list for solutions and for invalid entries
-def checkCountList(tileList, numCounts):
-    for index, count in enumerate(numCounts):
-        if count == 0 and index != 0:
-            return False
-                        
-        if count == 1:
-            tileX = tileList[index][0]
-            tileY = tileList[index][1]
-            sudokuGrid[tileX][tileY] = index
-            tPossibilities[(tileX, tileY)] = index
-            rescanQueue.append([(tileX, tileY), index])
-            if fullCountScanXYZ[2] == 1:
-                break
-
-            if count > 19:
-                return False
-    return True
-
-## Validates grid by checking the number of open tiles in the row/column/box equals
-## to the number of distinct possibilities still remaining
-def validateGrid(tPossibilities):
-    for row in range(9):
-        openTileCount = 0
-        openNumSet = set()
-
-        for column in range(9):
-            if type(tPossibilities[(row, column)]) == list:
-                openNumSet.update(tPossibilities[(row, column)])
-                openTileCount += 1
-
-        if len(openNumSet) != openTileCount:
-            return False
-
-    for column in range(9):
-        openTileCount = 0
-        openNumSet = set()
-
-        for row in range(9):
-            if type(tPossibilities[(row, column)]) == list:
-                openNumSet.update(tPossibilities[(row, column)])
-                openTileCount += 1
+                # Scan column
+                self.numCounts = [0] * 10
+                self.tileList = dict()
                 
-        if len(openNumSet) != openTileCount:
-            return False
+                for column in range(9):
+                    if not self.updateChecks(gridX, column, sNum):
+                        return False
+                if not self.checkCountList(self.fullCountScanXYZ[1]):
+                    return False
 
-    for x in range(3):
-        for y in range(3):
+                # Scan box
+                self.numCounts = [0] * 10
+                self.tileList = dict()
+                boxX = (gridX // 3) * 3
+                boxY = (gridY // 3) * 3
+                for i in range(3):
+                    for j in range(3):
+                        if not self.updateChecks(boxX+i, boxY+j, sNum):
+                            return False
+                if not self.checkCountList(self.fullCountScanXYZ[2]):
+                    return False
+                
+                self.rescanQueue.pop(0)
+
+            # Row counts
+            if not self.rescanQueue:
+                for row in range(9):
+                    self.numCounts = [0] * 10
+                    self.tileList = dict()
+                    
+                    for column in range(9):
+                        if not self.updateChecks(row, column):
+                            return False
+                    if not self.checkCountList(self.fullCountScanXYZ[0]):
+                        return False
+                self.fullCountScanXYZ[0] = 1
+                
+            # Colomn counts                 
+            if not self.rescanQueue:
+                for column in range(9):
+                    self.numCounts = [0] * 10
+                    self.tileList = dict()
+                    
+                    for row in range(9):
+                        if not self.updateChecks(row, column):
+                            return False
+                    if not self.checkCountList(self.fullCountScanXYZ[1]):
+                        return False
+                self.fullCountScanXYZ[1] = 1
+
+            # Box counts
+            if not self.rescanQueue:
+                for x in range(3):
+                    for y in range(3):
+                        self.numCounts = [0] * 10
+                        self.tileList = dict()
+                        boxX = x * 3
+                        boxY = y * 3
+                        
+                        for i in range(3):
+                            for j in range(3):
+                                if not self.updateChecks(boxX+i, boxY+j):
+                                    return False
+                        if not self.checkCountList(self.fullCountScanXYZ[2]):
+                            return False
+                self.fullCountScanXYZ[2] = 1
+
+        ##if not (self.validateGrid()):
+            ##return False 
+        return True
+
+    # Removes nummber from possibility list if supplied
+    # Increments number count list for later check
+    def updateChecks(self, xCheck, yCheck, numCheck = None):
+        if type(self.fullPossibilities[(xCheck, yCheck)]) == list:
+            pList = self.fullPossibilities[(xCheck, yCheck)]
+            if numCheck is not None:
+                try:
+                    pList.remove(numCheck)
+                except:
+                    pass
+
+                if len(pList) == 0:
+                    return False
+                elif len(pList) == 1:
+                    self.sudokuGrid[xCheck][yCheck] = pList[0]
+                    self.fullPossibilities[(xCheck, yCheck)] = pList[0]
+                    self.rescanQueue.append([(xCheck, yCheck), pList[0]])
+                else:
+                    self.fullPossibilities[(xCheck, yCheck)] = pList
+
+            for pNum in pList:
+                self.numCounts[pNum] += 1
+                self.tileList[pNum] = (xCheck, yCheck)
+        else:
+            self.numCounts[self.fullPossibilities[(xCheck, yCheck)]] += 10
+        return True
+
+    # Checks count list for solutions and for invalid entries
+    def checkCountList(self, scanXYZ):
+        for index, count in enumerate(self.numCounts):
+            if count == 0 and index != 0:
+                return False              
+            elif count == 1:
+                tileX = self.tileList[index][0]
+                tileY = self.tileList[index][1]
+                self.sudokuGrid[tileX][tileY] = index
+                self.fullPossibilities[(tileX, tileY)] = index
+                self.rescanQueue.append([(tileX, tileY), index])
+                if self.fullCountScanXYZ[2] == scanXYZ:
+                    break
+            elif count > 19:
+                return False
+        return True
+
+    # Validates grid by checking the number of open tiles in the row/column/box equals
+    # to the number of distinct possibilities still remaining
+    def validateGrid(self):
+        for row in range(9):
             openTileCount = 0
             openNumSet = set()
 
-            for i in range(3):
-                for j in range(3):
-                    boxX = (x * 3) + i
-                    boxY = (y * 3) + j
-                    if type(tPossibilities[(boxX, boxY)]) == list:
-                        openNumSet.update(tPossibilities[(boxX, boxY)])
-                        openTileCount += 1
+            for column in range(9):
+                if type(self.fullPossibilities[(row, column)]) == list:
+                    openNumSet.update(self.fullPossibilities[(row, column)])
+                    openTileCount += 1
 
             if len(openNumSet) != openTileCount:
                 return False
-    return True
 
-## Checks if number is in the row
-def inRow(sudokuGrid, x, num):
-    for i in sudokuGrid[x]:
-        if i == num:
-            return False
-    return True
+        for column in range(9):
+            openTileCount = 0
+            openNumSet = set()
 
-## Checks if number is in the column
-def inColumn(sudokuGrid, y, num):
-    for x in range(9):
-        if sudokuGrid[x][y] == num:
-            return False
-    return True
-
-## Checks if number is in the box
-def inBox(sudokuGrid, x, y, num):
-    x = (x // 3) * 3
-    y = (y // 3) * 3
-
-    for i in range(3):
-        for j in range(3):
-            if sudokuGrid[x+i][y+j] == num:
+            for row in range(9):
+                if type(self.fullPossibilities[(row, column)]) == list:
+                    openNumSet.update(self.fullPossibilities[(row, column)])
+                    openTileCount += 1
+                    
+            if len(openNumSet) != openTileCount:
                 return False
-    return True
+
+        for x in range(3):
+            for y in range(3):
+                openTileCount = 0
+                openNumSet = set()
+                boxX = (x * 3)
+                boxY = (y * 3)
+
+                for i in range(3):
+                    for j in range(3):
+                        if type(self.fullPossibilities[(boxX+i, boxY+j)]) == list:
+                            openNumSet.update(self.fullPossibilities[(boxX+i, boxY+j)])
+                            openTileCount += 1
+
+                if len(openNumSet) != openTileCount:
+                    return False
+        return True
+
+    # Checks if number is in the row
+    def inRow(self, tSudokuGrid, gridX, numCheck):
+        for i in tSudokuGrid[gridX]:
+            if i == numCheck:
+                return False
+        return True
+
+    # Checks if number is in the column
+    def inColumn(self, tSudokuGrid, gridY, numCheck):
+        for x in range(9):
+            if tSudokuGrid[x][gridY] == numCheck:
+                return False
+        return True
+
+    # Checks if number is in the box
+    def inBox(self, tSudokuGrid, gridX, gridY, numCheck):
+        boxX = (gridX // 3) * 3
+        boxY = (gridY // 3) * 3
+
+        for i in range(3):
+            for j in range(3):
+                if tSudokuGrid[boxX+i][boxY+j] == numCheck:
+                    return False
+        return True

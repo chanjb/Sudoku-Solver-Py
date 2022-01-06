@@ -3,14 +3,14 @@ from tkinter import ttk
 from SudokuSolver import *
 import threading as th
 
-## Clears down the Sudoku grid
+# Clears down the Sudoku grid
 def reset():
     for rows in entryGrid:
         for entry in rows:
             entry.delete(0, 'end')
     errorVar.set("")
 
-## Initializes thread for solve function
+# Initializes thread for solve function
 def startSolve():
     errorVar.set('')
     sudokuGrid = []
@@ -29,10 +29,11 @@ def startSolve():
     sThread = th.Thread(target=solve, args=(sudokuGrid,))
     sThread.start()
 
-## Runs solving algorithm and displays the solution
+# Runs solving algorithm and displays the solution
 def solve(sudokuGrid):
-    if(simplifyGrid(sudokuGrid)):
-        if(solveSudoku(sudokuGrid)):
+    sSolver = SudokuSolver(sudokuGrid)
+    if(sSolver.simplifyGrid()):
+        if(sSolver.solveSudoku()):
             for x, rows in enumerate(entryGrid):
                 for y, entry in enumerate(rows):
                     entry.delete(0, 'end')
