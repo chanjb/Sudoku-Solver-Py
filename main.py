@@ -34,6 +34,7 @@ def solve(sudokuGrid):
     sSolver = SudokuSolver(sudokuGrid)
     if(sSolver.simplifyGrid()):
         if(sSolver.solveSudoku()):
+            sudokuGrid = sSolver.sudokuGrid
             for x, rows in enumerate(entryGrid):
                 for y, entry in enumerate(rows):
                     entry.delete(0, 'end')

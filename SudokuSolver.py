@@ -2,27 +2,27 @@ class SudokuSolver:
 
     def __init__(self, tSudokuGrid):
         self.sudokuGrid = tSudokuGrid
-        self.fullPossibilities = dict()
-        self.rescanQueue = []
-        self.fullCountScanXYZ = [0,0,0]
-        self.numCounts = [0] * 10
-        self.tileList = dict()
+        self._fullPossibilities = dict()
+        self._rescanQueue = []
+        self._fullCountScanXYZ = [0,0,0]
+        self._numCounts = [0] * 10
+        self._tileList = dict()
 
     # Returns a list of all possible valid numbers for a grid position
-    def findPossibilities(self, tSudokuGrid, gridX, gridY):
+    def _findPossibilities(self, tSudokuGrid, gridX, gridY):
         pList = []
         for i in range(1,10):
-            if (self.inRow(tSudokuGrid, gridX, i) and self.inColumn(tSudokuGrid, gridY, i) and self.inBox(tSudokuGrid, gridX, gridY, i)):
+            if (self._inRow(tSudokuGrid, gridX, i) and self._inColumn(tSudokuGrid, gridY, i) and self._inBox(tSudokuGrid, gridX, gridY, i)):
                 pList.append(i)
         return pList
 
     # Returns a dictionary with grid position as the key and list of possibilites as the value
-    def constructNextTilePossibilities(self, tSudokuGrid):
+    def _constructNextTilePossibilities(self, tSudokuGrid):
         tPossibilities = dict()
         for x, rows in enumerate(tSudokuGrid):
             for y, num in enumerate(rows):
                 if num == 0:
-                    tPossibilities[(x, y)] = self.findPossibilities(tSudokuGrid, x, y)
+                    tPossibilities[(x, y)] = self._findPossibilities(tSudokuGrid, x, y)
                     return tPossibilities
         return {}
 
@@ -30,7 +30,7 @@ class SudokuSolver:
     def solveSudoku(self, tSudokuGrid = None):
         if tSudokuGrid is None:
             tSudokuGrid = self.sudokuGrid
-        tile = self.constructNextTilePossibilities(tSudokuGrid)
+        tile = self._constructNextTilePossibilities(tSudokuGrid)
         for xy in tile:
             gridX = xy[0]
             gridY = xy[1]
@@ -53,101 +53,101 @@ class SudokuSolver:
         for x, rows in enumerate(self.sudokuGrid):
             for y, num in enumerate(rows):
                 if num == 0:
-                    pList = self.findPossibilities(self.sudokuGrid, x, y)
+                    pList = self._findPossibilities(self.sudokuGrid, x, y)
                     if len(pList) == 0:
                         return False   
                     elif len(pList) == 1:
                         self.sudokuGrid[x][y] = pList[0]
-                        self.fullPossibilities[(x, y)] = pList[0]
-                        self.rescanQueue.append([(x, y), pList[0]])
+                        self._fullPossibilities[(x, y)] = pList[0]
+                        self._rescanQueue.append([(x, y), pList[0]])
                     else:
-                        self.fullPossibilities[(x, y)] = pList
+                        self._fullPossibilities[(x, y)] = pList
                 else:
-                    self.fullPossibilities[(x, y)] = self.sudokuGrid[x][y]
+                    self._fullPossibilities[(x, y)] = self.sudokuGrid[x][y]
 
-        while self.rescanQueue or self.fullCountScanXYZ != [1,1,1]:
-            if self.rescanQueue:
-                xy = self.rescanQueue[0][0]
+        while self._rescanQueue or self._fullCountScanXYZ != [1,1,1]:
+            if self._rescanQueue:
+                xy = self._rescanQueue[0][0]
                 gridX = xy[0]
                 gridY = xy[1]
-                sNum = self.rescanQueue[0][1]
+                sNum = self._rescanQueue[0][1]
 
                 # Scan row
-                self.numCounts = [0] * 10
-                self.tileList = dict()
+                self._numCounts = [0] * 10
+                self._tileList = dict()
                 
                 for row in range(9):
-                    if not self.updateChecks(row, gridY, sNum):
+                    if not self._updateChecks(row, gridY, sNum):
                         return False
-                if not self.checkCountList(self.fullCountScanXYZ[0]):
+                if not self._checkCountList(self._fullCountScanXYZ[0]):
                     return False
 
                 # Scan column
-                self.numCounts = [0] * 10
-                self.tileList = dict()
+                self._numCounts = [0] * 10
+                self._tileList = dict()
                 
                 for column in range(9):
-                    if not self.updateChecks(gridX, column, sNum):
+                    if not self._updateChecks(gridX, column, sNum):
                         return False
-                if not self.checkCountList(self.fullCountScanXYZ[1]):
+                if not self._checkCountList(self._fullCountScanXYZ[1]):
                     return False
 
                 # Scan box
-                self.numCounts = [0] * 10
-                self.tileList = dict()
+                self._numCounts = [0] * 10
+                self._tileList = dict()
                 boxX = (gridX // 3) * 3
                 boxY = (gridY // 3) * 3
                 for i in range(3):
                     for j in range(3):
-                        if not self.updateChecks(boxX+i, boxY+j, sNum):
+                        if not self._updateChecks(boxX+i, boxY+j, sNum):
                             return False
-                if not self.checkCountList(self.fullCountScanXYZ[2]):
+                if not self._checkCountList(self._fullCountScanXYZ[2]):
                     return False
                 
-                self.rescanQueue.pop(0)
+                self._rescanQueue.pop(0)
 
             # Row counts
-            if not self.rescanQueue:
+            if not self._rescanQueue:
                 for row in range(9):
-                    self.numCounts = [0] * 10
-                    self.tileList = dict()
+                    self._numCounts = [0] * 10
+                    self._tileList = dict()
                     
                     for column in range(9):
-                        if not self.updateChecks(row, column):
+                        if not self._updateChecks(row, column):
                             return False
-                    if not self.checkCountList(self.fullCountScanXYZ[0]):
+                    if not self._checkCountList(self._fullCountScanXYZ[0]):
                         return False
-                self.fullCountScanXYZ[0] = 1
+                self._fullCountScanXYZ[0] = 1
                 
             # Colomn counts                 
-            if not self.rescanQueue:
+            if not self._rescanQueue:
                 for column in range(9):
-                    self.numCounts = [0] * 10
-                    self.tileList = dict()
+                    self._numCounts = [0] * 10
+                    self._tileList = dict()
                     
                     for row in range(9):
-                        if not self.updateChecks(row, column):
+                        if not self._updateChecks(row, column):
                             return False
-                    if not self.checkCountList(self.fullCountScanXYZ[1]):
+                    if not self._checkCountList(self._fullCountScanXYZ[1]):
                         return False
-                self.fullCountScanXYZ[1] = 1
+                self._fullCountScanXYZ[1] = 1
 
             # Box counts
-            if not self.rescanQueue:
+            if not self._rescanQueue:
                 for x in range(3):
                     for y in range(3):
-                        self.numCounts = [0] * 10
-                        self.tileList = dict()
+                        self._numCounts = [0] * 10
+                        self._tileList = dict()
                         boxX = x * 3
                         boxY = y * 3
                         
                         for i in range(3):
                             for j in range(3):
-                                if not self.updateChecks(boxX+i, boxY+j):
+                                if not self._updateChecks(boxX+i, boxY+j):
                                     return False
-                        if not self.checkCountList(self.fullCountScanXYZ[2]):
+                        if not self._checkCountList(self._fullCountScanXYZ[2]):
                             return False
-                self.fullCountScanXYZ[2] = 1
+                self._fullCountScanXYZ[2] = 1
 
         ##if not (self.validateGrid()):
             ##return False 
@@ -155,9 +155,9 @@ class SudokuSolver:
 
     # Removes nummber from possibility list if supplied
     # Increments number count list for later check
-    def updateChecks(self, xCheck, yCheck, numCheck = None):
-        if type(self.fullPossibilities[(xCheck, yCheck)]) == list:
-            pList = self.fullPossibilities[(xCheck, yCheck)]
+    def _updateChecks(self, xCheck, yCheck, numCheck = None):
+        if type(self._fullPossibilities[(xCheck, yCheck)]) == list:
+            pList = self._fullPossibilities[(xCheck, yCheck)]
             if numCheck is not None:
                 try:
                     pList.remove(numCheck)
@@ -168,30 +168,30 @@ class SudokuSolver:
                     return False
                 elif len(pList) == 1:
                     self.sudokuGrid[xCheck][yCheck] = pList[0]
-                    self.fullPossibilities[(xCheck, yCheck)] = pList[0]
-                    self.rescanQueue.append([(xCheck, yCheck), pList[0]])
+                    self._fullPossibilities[(xCheck, yCheck)] = pList[0]
+                    self._rescanQueue.append([(xCheck, yCheck), pList[0]])
                 else:
-                    self.fullPossibilities[(xCheck, yCheck)] = pList
+                    self._fullPossibilities[(xCheck, yCheck)] = pList
 
             for pNum in pList:
-                self.numCounts[pNum] += 1
-                self.tileList[pNum] = (xCheck, yCheck)
+                self._numCounts[pNum] += 1
+                self._tileList[pNum] = (xCheck, yCheck)
         else:
-            self.numCounts[self.fullPossibilities[(xCheck, yCheck)]] += 10
+            self._numCounts[self._fullPossibilities[(xCheck, yCheck)]] += 10
         return True
 
     # Checks count list for solutions and for invalid entries
-    def checkCountList(self, scanXYZ):
-        for index, count in enumerate(self.numCounts):
+    def _checkCountList(self, scanXYZ):
+        for index, count in enumerate(self._numCounts):
             if count == 0 and index != 0:
                 return False              
             elif count == 1:
-                tileX = self.tileList[index][0]
-                tileY = self.tileList[index][1]
+                tileX = self._tileList[index][0]
+                tileY = self._tileList[index][1]
                 self.sudokuGrid[tileX][tileY] = index
-                self.fullPossibilities[(tileX, tileY)] = index
-                self.rescanQueue.append([(tileX, tileY), index])
-                if self.fullCountScanXYZ[2] == scanXYZ:
+                self._fullPossibilities[(tileX, tileY)] = index
+                self._rescanQueue.append([(tileX, tileY), index])
+                if self._fullCountScanXYZ[2] == scanXYZ:
                     break
             elif count > 19:
                 return False
@@ -199,14 +199,14 @@ class SudokuSolver:
 
     # Validates grid by checking the number of open tiles in the row/column/box equals
     # to the number of distinct possibilities still remaining
-    def validateGrid(self):
+    def _validateGrid(self):
         for row in range(9):
             openTileCount = 0
             openNumSet = set()
 
             for column in range(9):
-                if type(self.fullPossibilities[(row, column)]) == list:
-                    openNumSet.update(self.fullPossibilities[(row, column)])
+                if type(self._fullPossibilities[(row, column)]) == list:
+                    openNumSet.update(self._fullPossibilities[(row, column)])
                     openTileCount += 1
 
             if len(openNumSet) != openTileCount:
@@ -217,8 +217,8 @@ class SudokuSolver:
             openNumSet = set()
 
             for row in range(9):
-                if type(self.fullPossibilities[(row, column)]) == list:
-                    openNumSet.update(self.fullPossibilities[(row, column)])
+                if type(self._fullPossibilities[(row, column)]) == list:
+                    openNumSet.update(self._fullPossibilities[(row, column)])
                     openTileCount += 1
                     
             if len(openNumSet) != openTileCount:
@@ -233,8 +233,8 @@ class SudokuSolver:
 
                 for i in range(3):
                     for j in range(3):
-                        if type(self.fullPossibilities[(boxX+i, boxY+j)]) == list:
-                            openNumSet.update(self.fullPossibilities[(boxX+i, boxY+j)])
+                        if type(self._fullPossibilities[(boxX+i, boxY+j)]) == list:
+                            openNumSet.update(self._fullPossibilities[(boxX+i, boxY+j)])
                             openTileCount += 1
 
                 if len(openNumSet) != openTileCount:
@@ -242,21 +242,21 @@ class SudokuSolver:
         return True
 
     # Checks if number is in the row
-    def inRow(self, tSudokuGrid, gridX, numCheck):
+    def _inRow(self, tSudokuGrid, gridX, numCheck):
         for i in tSudokuGrid[gridX]:
             if i == numCheck:
                 return False
         return True
 
     # Checks if number is in the column
-    def inColumn(self, tSudokuGrid, gridY, numCheck):
+    def _inColumn(self, tSudokuGrid, gridY, numCheck):
         for x in range(9):
             if tSudokuGrid[x][gridY] == numCheck:
                 return False
         return True
 
     # Checks if number is in the box
-    def inBox(self, tSudokuGrid, gridX, gridY, numCheck):
+    def _inBox(self, tSudokuGrid, gridX, gridY, numCheck):
         boxX = (gridX // 3) * 3
         boxY = (gridY // 3) * 3
 
