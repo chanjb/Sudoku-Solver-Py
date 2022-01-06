@@ -32,8 +32,7 @@ class SudokuSolver:
             tSudokuGrid = self.sudokuGrid
         tile = self._constructNextTilePossibilities(tSudokuGrid)
         for xy in tile:
-            gridX = xy[0]
-            gridY = xy[1]
+            gridX, gridY = xy
             for i in tile[xy]:
                 tSudokuGrid[gridX][gridY] = i
                 if (self.solveSudoku(tSudokuGrid)):
@@ -59,7 +58,7 @@ class SudokuSolver:
                     elif len(pList) == 1:
                         self.sudokuGrid[x][y] = pList[0]
                         self._fullPossibilities[(x, y)] = pList[0]
-                        self._rescanQueue.append([(x, y), pList[0]])
+                        self._rescanQueue.append((x, y, pList[0]))
                     else:
                         self._fullPossibilities[(x, y)] = pList
                 else:
@@ -67,10 +66,7 @@ class SudokuSolver:
 
         while self._rescanQueue or self._fullCountScanXYZ != [1,1,1]:
             if self._rescanQueue:
-                xy = self._rescanQueue[0][0]
-                gridX = xy[0]
-                gridY = xy[1]
-                sNum = self._rescanQueue[0][1]
+                gridX, gridY, sNum = self._rescanQueue[0]
 
                 # Scan row
                 self._numCounts = [0] * 10
@@ -169,7 +165,7 @@ class SudokuSolver:
                 elif len(pList) == 1:
                     self.sudokuGrid[xCheck][yCheck] = pList[0]
                     self._fullPossibilities[(xCheck, yCheck)] = pList[0]
-                    self._rescanQueue.append([(xCheck, yCheck), pList[0]])
+                    self._rescanQueue.append((xCheck, yCheck, pList[0]))
                 else:
                     self._fullPossibilities[(xCheck, yCheck)] = pList
 
@@ -190,7 +186,7 @@ class SudokuSolver:
                 tileY = self._tileList[index][1]
                 self.sudokuGrid[tileX][tileY] = index
                 self._fullPossibilities[(tileX, tileY)] = index
-                self._rescanQueue.append([(tileX, tileY), index])
+                self._rescanQueue.append((tileX, tileY, index))
                 if self._fullCountScanXYZ[2] == scanXYZ:
                     break
             elif count > 19:
