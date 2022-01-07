@@ -354,7 +354,7 @@
 		{
 		"id": 951356419, 
 		"dificulty": "Evil", 
-		"description": "Bad input, no solution exists",
+		"description": "Re-use Evil puzzle 951,356,419 with 1 wrong number; no solution exists",
 		"sudoku": 
 			[[0, 8, 9, 0, 0, 0, 0, 0, 7], 
 			[2, 0, 0, 0, 0, 3, 0, 0, 8], 
@@ -372,7 +372,7 @@
 		{
 		"id": 10079886544, 
 		"dificulty": "Evil",
-		"description": "Bad input, no solution exists",
+		"description": "Re-use Evil puzzle 10,079,886,544 with 1 wrong number; no solution exists",
 		"sudoku": 
 			[[0, 0, 9, 7, 8, 0, 0 ,2, 0],
 			[0, 0, 0, 0, 0, 1, 0, 0, 0],
@@ -388,7 +388,7 @@
 		},
 	"16": 
 		{
-		"description": "Bad input, no solution exists",
+		"description": "Duplicate number; no solution exists",
 		"sudoku": 
 			[[1, 1, 0, 0, 0, 0, 0, 0, 0],
 			[0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -404,7 +404,7 @@
 		},
 	"17": 
 		{
-		"description": "Bad input, no solution exists",
+		"description": "Number 1 has zero possibility in box; no solution exists",
 		"sudoku": 
 			[[0, 0, 0, 1, 0, 0, 0, 0, 0],
 			[0, 0, 0, 0, 0, 0, 1, 0, 0],
